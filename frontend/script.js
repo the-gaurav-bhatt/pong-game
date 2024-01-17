@@ -28,14 +28,14 @@ let ballY = 350;
 let ballRadius = 5;
 
 // movement of the ball
-let speed = 1;
-let velocityX = 0.4;
-let velocityY = 0.4;
+let speed = 5;
+let velocityX = 5;
+let velocityY = 5;
 
 // scores
 let playerScore = 0;
 let computerScore = 0;
-let computerPaddleSpeed = 0.1;
+let computerPaddleSpeed = 1;
 let currentPosition;
 let isGameOver = false;
 
@@ -56,7 +56,7 @@ function updateScore() {
     console.log("Computer Scored");
     resetBall();
   } else if (ballY - ballRadius < 0) {
-    computerPaddleSpeed += 0.1;
+    computerPaddleSpeed += 1;
     playerScore++;
     console.log("Player Scored");
     resetBall();
@@ -95,13 +95,13 @@ function collisionPaddle(player) {
 function resetBall() {
   ballX = width / 2; // Center the ball on the X-axis
   ballY = height / 2; // Center the ball on the Y-axis
-  velocityX = 0.4;
-  velocityY = 0.4;
-  speed = 1;
+  velocityX = 5;
+  velocityY = 5;
+  speed = 5;
   if (isRefree) {
     socket.emit("ballDetail", { ballX, ballY, velocityX, velocityY });
   }
-  velocityX = 0.8; // Reset velocityX as well
+  velocityX = 5; // Reset velocityX as well
   velocityY = -velocityY;
 }
 
@@ -131,7 +131,7 @@ function update() {
     velocityY = direction * speed; // Update velocityY based on the speed and direction
     // Adjust velocityX based on where the ball hit the paddle
     velocityX = direction * speed * (currentPosition / (paddleWidth / 2));
-    speed += 0.1; // Increase speed after each hit
+    speed += 0.2; // Increase speed after each hit
     console.log("Collision with paddle. Direction:", direction);
   }
 }
