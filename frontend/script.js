@@ -1,9 +1,18 @@
 const { body } = document;
 const canvas = document.createElement("canvas");
 const context = canvas.getContext("2d");
-
+const gameOverElem = document.createElement("div");
 canvas.addEventListener("mousemove", movePaddle);
+body.style.display = "flex";
+body.style.justifyContent = "center";
+body.style.alignItems = "center";
+body.style.height = "100vh";
+///////////////////////////////////
+console.log("Connecting to backend....");
+const socket = io("http://localhost:3000");
+let isRefree = false;
 
+/////////////////////////////////////
 // canvas height and width
 const width = 500;
 const height = 700;
@@ -19,15 +28,27 @@ let ballY = 350;
 let ballRadius = 5;
 
 // movement of the ball
-let speed = 5;
-let velocityX = 5;
-let velocityY = 5;
+let speed = 1;
+let velocityX = 0.4;
+let velocityY = 0.4;
 
 // scores
 let playerScore = 0;
 let computerScore = 0;
 let computerPaddleSpeed = 0.1;
 let currentPosition;
+let isGameOver = false;
+
+function renderIntro() {
+  // Canvas Background
+  context.fillStyle = "black";
+  context.fillRect(0, 0, width, height);
+
+  // Intro Text
+  context.fillStyle = "white";
+  context.font = "32px Courier New";
+  context.fillText("Waiting for opponent...", 20, canvas.height / 2 - 30);
+}
 
 function updateScore() {
   if (ballY + ballRadius > height) {
@@ -39,6 +60,13 @@ function updateScore() {
     playerScore++;
     console.log("Player Scored");
     resetBall();
+  }
+  socket.emit("scoreUpdate", { playerScore, computerScore });
+}
+function gameOver() {
+  if (playerScore == 5 || computerScore == 5) {
+    isGameOver = true;
+    showGameOverScreen();
   }
 }
 let paddleDiff = 25;
@@ -58,7 +86,6 @@ function collisionPaddle(player) {
       currentPosition = ballX - (paddleXTop + paddleWidth / 2);
       console.log("Collision with top paddle");
       console.log(ballX, ballY);
-      console.log();
       return true;
     }
   }
@@ -68,8 +95,13 @@ function collisionPaddle(player) {
 function resetBall() {
   ballX = width / 2; // Center the ball on the X-axis
   ballY = height / 2; // Center the ball on the Y-axis
-  speed = 5;
-  velocityX = 5; // Reset velocityX as well
+  velocityX = 0.4;
+  velocityY = 0.4;
+  speed = 1;
+  if (isRefree) {
+    socket.emit("ballDetail", { ballX, ballY, velocityX, velocityY });
+  }
+  velocityX = 0.8; // Reset velocityX as well
   velocityY = -velocityY;
 }
 
@@ -88,8 +120,11 @@ function update() {
   ballX += velocityX;
   ballY += velocityY;
   let player = ballX < canvas.height / 2 ? "comp" : "user";
+  if (isRefree) {
+    socket.emit("ballDetail", { ballX, ballY, velocityX, velocityY });
+  }
   updateScore();
-  moveComputerPaddle();
+  // moveComputerPaddle();
 
   if (collisionPaddle(player)) {
     let direction = ballY < height / 2 ? 1 : -1; // Determine the direction based on ball position
@@ -99,8 +134,6 @@ function update() {
     speed += 0.1; // Increase speed after each hit
     console.log("Collision with paddle. Direction:", direction);
   }
-
-  collisionWall();
 }
 
 function movePaddle(e) {
@@ -108,6 +141,8 @@ function movePaddle(e) {
   let mouseX = e.clientX - rect.left;
   // Adjust the paddle position so the mouse is at the center of the paddle
   paddleXBottom = mouseX - paddleWidth / 2;
+  socket.emit("paddleDetail", { paddleXBottom, paddleXTop });
+
   // console.log("Mouse X:", mouseX);
 }
 
@@ -149,15 +184,92 @@ function renderCanvas() {
   context.fill();
 
   // showing score
+  const play = isRefree ? "Host" : "Player";
   context.font = "32px Courier New";
+  context.fillText(play, 20, canvas.height / 2 - 60);
+
   context.fillText(playerScore, 20, canvas.height / 2 + 50);
   context.fillText(computerScore, 20, canvas.height / 2 - 30);
 }
+function showGameOverScreen() {
+  gameOverElem.innerHTML = "";
 
+  body.removeChild(canvas);
+  const textScreen = document.createElement("h1");
+  textScreen.textContent =
+    playerScore > computerScore ? "You Won !" : "You Lost";
+  textScreen.style.color = "Green";
+  const button = document.createElement("button");
+  button.textContent = "Play Again";
+  button.style.display = "block";
+  button.style.margin = "20px auto";
+  button.style.padding = "10px 20px";
+  button.style.fontSize = "1.2em";
+  gameOverElem.append(textScreen, button);
+
+  document.body.appendChild(gameOverElem);
+
+  button.addEventListener("click", () => {
+    document.body.removeChild(gameOverElem);
+
+    resetBall();
+    playerScore = 0;
+    computerScore = 0;
+    isGameOver = false;
+    game();
+  });
+}
 function game() {
   body.appendChild(canvas);
-  update(); //this will update all the movements, collision detection and score update
+  if (isRefree) {
+    update(); //this will update all the movements, collision detection and score update
+  }
   renderCanvas(); // then those are updated here
+  collisionWall();
+
+  gameOver();
+
+  if (!isGameOver) {
+    window.requestAnimationFrame(game);
+  }
 }
-const fps = 60;
-setInterval(game, 1000 / 60); // this will give animation like feel
+function loadGame() {
+  renderIntro();
+  socket.emit("ready");
+}
+loadGame();
+socket.on("connect", () => {
+  console.log(socket.id);
+});
+socket.on("startGame", (refId) => {
+  console.log("Refree is ", refId);
+  isRefree = socket.id === refId;
+  game();
+});
+
+socket.on("realBallDetail", (ballDetail) => {
+  if (!isRefree) {
+    // ballX = ballDetail.ballX;
+    // ballY = ballDetail.ballY;
+    velocityX = ballDetail.velocityX;
+    velocityY = -ballDetail.velocityY;
+    ballX += velocityX;
+    ballY += velocityY;
+    // console.log(ballX, ballY, velocityX, velocityY);
+  }
+});
+socket.on("realpaddleDetail", (paddleDetail) => {
+  paddleXBottom = paddleDetail.paddleXTop;
+  paddleXTop = paddleDetail.paddleXBottom;
+});
+socket.on("realScoreUpdate", (score) => {
+  if (
+    playerScore != score.computerScore ||
+    computerScore != score.playerScore
+  ) {
+    ballX = 250;
+    ballY = 350;
+    playerScore = score.computerScore;
+    computerScore = score.playerScore;
+  }
+});
