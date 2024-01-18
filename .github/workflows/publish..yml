@@ -13,8 +13,9 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-vesion: 18.3.0.
+          node-version: "20.1"
+          cache: "npm"
       - name: Install Dependencies
-        run: npm i
+        run: npm install
       - name: Run The Server
         run: node server.js
