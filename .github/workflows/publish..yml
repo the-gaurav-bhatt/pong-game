@@ -1,0 +1,20 @@
+name: Game Deploy
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout the source
+        uses: actions/checkout@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-vesion: 20.1
+      - name: Install Dependencies
+        run: npm i
+      - name: Run The Server
+        run: node server.js
