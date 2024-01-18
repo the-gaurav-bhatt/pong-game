@@ -9,7 +9,8 @@ body.style.alignItems = "center";
 body.style.height = "100vh";
 ///////////////////////////////////
 console.log("Connecting to backend....");
-const socket = io("http://localhost:3000");
+// /pong to connect specially to pong namespace
+const socket = io("/pong");
 let isRefree = false;
 
 /////////////////////////////////////
