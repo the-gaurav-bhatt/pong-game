@@ -18,8 +18,7 @@ jobs:
 
       - name: Install Dependencies
         run: npm i
-      - name: Run The Server
-        run: node server.js
+
   publish:
     runs-on: ["ubantu-latest"]
     steps:
