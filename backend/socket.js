@@ -4,18 +4,22 @@ export function listenSocket(io) {
   let totalRoom = 0;
   pongNameSpace.on("connection", (socket) => {
     let room;
-    socket.on("ready", () => {
-      console.log(socket.id + " Player is Connected Now");
-      const totalPlayers = io.engine.clientsCount;
+    const totalPlayers = io.engine.clientsCount;
+    socket.on("ready", (nameData) => {
+      console.log(nameData + " Player is Connected Now");
       room = "room " + Math.floor(totalRoom / 2);
       socket.join(room);
       totalRoom++;
-      console.log("User id " + socket.id + " joined " + room);
+      console.log("User id " + nameData + " joined " + room);
       if (totalPlayers % 2 == 0) {
-        pongNameSpace.in(room).emit("startGame", socket.id);
+        pongNameSpace.to(room).emit("playerCount", totalPlayers);
+        setTimeout(() => {
+          pongNameSpace.in(room).emit("startGame", nameData, totalPlayers);
+        }, 1000);
       }
       console.log(totalPlayers);
     });
+
     socket.on("ballDetail", (ballDetail) => {
       socket.to(room).emit("realBallDetail", ballDetail);
     });

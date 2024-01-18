@@ -12,6 +12,21 @@ console.log("Connecting to backend....");
 // /pong to connect specially to pong namespace
 const socket = io("/pong");
 let isRefree = false;
+let myName;
+var form = document.getElementById("nameForm");
+var input = document.getElementById("name");
+canvas.hidden = true;
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+  if (input.value) {
+    myName = input.value;
+    socket.emit("ready", myName);
+    input.value = "";
+  }
+  form.hidden = true;
+  canvas.hidden = false;
+  input.hidden = true;
+});
 
 /////////////////////////////////////
 // canvas height and width
@@ -39,7 +54,7 @@ let computerScore = 0;
 let computerPaddleSpeed = 1;
 let currentPosition;
 let isGameOver = false;
-
+let totalPlayers = 0;
 function renderIntro() {
   // Canvas Background
   context.fillStyle = "black";
@@ -185,9 +200,10 @@ function renderCanvas() {
   context.fill();
 
   // showing score
-  const play = isRefree ? "Host" : "Player";
-  context.font = "32px Courier New";
+  const play = myName;
+  context.font = "16px Courier New";
   context.fillText(play, 20, canvas.height / 2 - 60);
+  context.fillText("Online:" + totalPlayers, 20, canvas.height / 6);
 
   context.fillText(playerScore, 20, canvas.height / 2 + 50);
   context.fillText(computerScore, 20, canvas.height / 2 - 30);
@@ -216,8 +232,12 @@ function showGameOverScreen() {
     resetBall();
     playerScore = 0;
     computerScore = 0;
+    speed = 5;
+    velocityX = 5;
+    velocityY = 5;
     isGameOver = false;
-    game();
+    loadGame();
+    socket.emit("ready", myName);
   });
 }
 function game() {
@@ -236,15 +256,18 @@ function game() {
 }
 function loadGame() {
   renderIntro();
-  socket.emit("ready");
 }
 loadGame();
-socket.on("connect", () => {
+socket.on("connect", (totalPlayers) => {
   console.log(socket.id);
+  totalPlayers = totalPlayers;
+});
+socket.on("playerCount", (playersCount) => {
+  totalPlayers = playersCount;
 });
 socket.on("startGame", (refId) => {
   console.log("Refree is ", refId);
-  isRefree = socket.id === refId;
+  isRefree = myName === refId;
   game();
 });
 
