@@ -13,7 +13,24 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-vesion: 18.0.0
+          node-version: 18.3.0
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm i
+      - name: Run The Server
+        run: node server.js
+  publish:
+    runs-on: ["ubantu-latest"]
+    steps:
+      - name: Checkout the source
+        uses: actions/checkout@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.3.0
+          cache: "npm"
+
       - name: Install Dependencies
         run: npm i
       - name: Run The Server
