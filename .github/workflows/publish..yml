@@ -1,36 +1,20 @@
-name: Game Deploy
-on:
-  push:
-    branches:
-      - main
+# name: Game Deploy
+# on:
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  deploy:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout the source
-        uses: actions/checkout@v2
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.15.1
-          cache: "npm"
+# jobs:
+#   deploy:
+#     runs-on: self-hosted
+#     steps:
+#       - name: Checkout the source
+#         uses: actions/checkout@v2
+#       - name: Install Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: 16.15.1
+#           cache: "npm"
 
-      - name: Install Dependencies
-        run: npm i
-
-  publish:
-    runs-on: ["ubantu-latest"]
-    steps:
-      - name: Checkout the source
-        uses: actions/checkout@v2
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.15.1
-          cache: "npm"
-
-      - name: Install Dependencies
-        run: npm i
-      - name: Run The Server
-        run: node server.js
+#       - name: Install Dependencies
+#         run: npm i
