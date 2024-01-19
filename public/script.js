@@ -83,6 +83,7 @@ function gameOver() {
   if (playerScore == 5 || computerScore == 5) {
     isGameOver = true;
     showGameOverScreen();
+    socket.emit("gameOver", myName);
   }
 }
 let paddleDiff = 25;
@@ -227,8 +228,6 @@ function showGameOverScreen() {
   document.body.appendChild(gameOverElem);
 
   button.addEventListener("click", () => {
-    document.body.removeChild(gameOverElem);
-
     resetBall();
     playerScore = 0;
     computerScore = 0;
@@ -236,7 +235,7 @@ function showGameOverScreen() {
     velocityX = 5;
     velocityY = 5;
     isGameOver = false;
-    loadGame();
+    textScreen.textContent = "Waiting For Another Player...";
     socket.emit("ready", myName);
   });
 }
@@ -269,6 +268,7 @@ socket.on("startGame", (refId) => {
   console.log("Refree is ", refId);
   isRefree = myName === refId;
   game();
+  document.body.removeChild(gameOverElem);
 });
 
 socket.on("realBallDetail", (ballDetail) => {

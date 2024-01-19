@@ -2,22 +2,30 @@ export function listenSocket(io) {
   // create a namespace for pong game. need to use this in frontend
   const pongNameSpace = io.of("/pong");
   let totalRoom = 0;
+  let totalReadyPlayer = 0;
+  let rooms = [];
+  let player = [];
   pongNameSpace.on("connection", (socket) => {
     let room;
     const totalPlayers = io.engine.clientsCount;
     socket.on("ready", (nameData) => {
+      totalReadyPlayer++;
+      player.push(nameData);
       console.log(nameData + " Player is Connected Now");
       room = "room " + Math.floor(totalRoom / 2);
       socket.join(room);
       totalRoom++;
       console.log("User id " + nameData + " joined " + room);
-      if (totalPlayers % 2 == 0) {
-        pongNameSpace.to(room).emit("playerCount", totalPlayers);
+      if (totalReadyPlayer % 2 == 0) {
+        rooms.push(player);
+        player = [];
+        pongNameSpace.to(room).emit("playerCount", totalReadyPlayer);
         setTimeout(() => {
-          pongNameSpace.in(room).emit("startGame", nameData, totalPlayers);
+          pongNameSpace.in(room).emit("startGame", nameData, totalReadyPlayer);
         }, 1000);
       }
-      console.log(totalPlayers);
+      console.log(rooms);
+      console.log(totalReadyPlayer);
     });
 
     socket.on("ballDetail", (ballDetail) => {
@@ -32,6 +40,16 @@ export function listenSocket(io) {
     socket.on("disconnect", () => {
       console.log("Player" + socket.id + " disconnected from " + room);
       socket.leave(room);
+      if (totalReadyPlayer > 0) {
+        totalReadyPlayer--;
+      }
+    });
+    socket.on("gameOver", (nameData) => {
+      socket.leave(room);
+      console.log("Game over. Player " + nameData + " has Left The room");
+      if (totalReadyPlayer > 0) {
+        totalReadyPlayer--;
+      }
     });
   });
 }
