@@ -13,6 +13,7 @@ console.log("Connecting to backend....");
 const socket = io("/pong");
 let isRefree = false;
 let myName;
+let opponent;
 var form = document.getElementById("nameForm");
 var input = document.getElementById("name");
 canvas.hidden = true;
@@ -203,11 +204,12 @@ function renderCanvas() {
   // showing score
   const play = myName;
   context.font = "16px Courier New";
-  context.fillText(play, 20, canvas.height / 2 - 60);
   context.fillText("Online:" + totalPlayers, 20, canvas.height / 6);
 
+  context.fillText(myName, 20, canvas.height / 2 + 20);
   context.fillText(playerScore, 20, canvas.height / 2 + 50);
   context.fillText(computerScore, 20, canvas.height / 2 - 30);
+  context.fillText(opponent, 20, canvas.height / 2 - 10);
 }
 function showGameOverScreen() {
   gameOverElem.innerHTML = "";
@@ -264,10 +266,16 @@ socket.on("connect", (totalPlayers) => {
 socket.on("playerCount", (playersCount) => {
   totalPlayers = playersCount;
 });
-socket.on("startGame", (refId) => {
-  console.log("Refree is ", refId);
-  isRefree = myName === refId;
+socket.on("startGame", (players) => {
+  if (myName != players[0]) {
+    opponent = players[0];
+  } else {
+    opponent = players[1];
+  }
+  console.log("Refree is ", players[1]);
+  isRefree = myName === players[1];
   game();
+  console.log(players);
   document.body.removeChild(gameOverElem);
 });
 

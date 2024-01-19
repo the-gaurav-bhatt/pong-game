@@ -3,25 +3,29 @@ export function listenSocket(io) {
   const pongNameSpace = io.of("/pong");
   let totalRoom = 0;
   let totalReadyPlayer = 0;
-  let rooms = [];
-  let player = [];
+  let rooms = {};
+  // let player = [];
   pongNameSpace.on("connection", (socket) => {
     let room;
-    const totalPlayers = io.engine.clientsCount;
     socket.on("ready", (nameData) => {
       totalReadyPlayer++;
-      player.push(nameData);
+      // player.push(nameData);
       console.log(nameData + " Player is Connected Now");
       room = "room " + Math.floor(totalRoom / 2);
+      if (!rooms[room]) {
+        rooms[room] = [];
+      }
+
+      rooms[room].push(nameData);
+
       socket.join(room);
       totalRoom++;
       console.log("User id " + nameData + " joined " + room);
       if (totalReadyPlayer % 2 == 0) {
-        rooms.push(player);
-        player = [];
+        // player = [];
         pongNameSpace.to(room).emit("playerCount", totalReadyPlayer);
         setTimeout(() => {
-          pongNameSpace.in(room).emit("startGame", nameData, totalReadyPlayer);
+          pongNameSpace.in(room).emit("startGame", rooms[room]);
         }, 1000);
       }
       console.log(rooms);
